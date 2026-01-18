@@ -38,7 +38,6 @@ export class UsersService {
           fullName: payload.fullName,
           phone: payload.phone,
           password: hashedPassword,
-          role: payload.role,
           ...(file && { image: `/uploads/${file.filename}` }),
         },
       });
@@ -226,6 +225,16 @@ export class UsersService {
 
   async remove(id: number) {
     try {
+      const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      return {
+        success: false,
+        message: 'User topilmadi',
+      };
+    }
       return this.prisma.user.delete({ where: { id } });
     } catch (error) {
       console.log(error);

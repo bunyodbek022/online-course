@@ -47,6 +47,7 @@ model User {
   role      UserRole @default(STUDENT)
   fullName  String
   image     String?
+  isActive Boolean @default(true)
   createdAt DateTime @default(now())
 
   mentorProfile MentorProfile?
