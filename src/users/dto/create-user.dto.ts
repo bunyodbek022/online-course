@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsPhoneNumber, MinLength } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
-export class CreateUserDto {
+export class RegisterDto {
   @IsPhoneNumber()
   phone: string;
 
