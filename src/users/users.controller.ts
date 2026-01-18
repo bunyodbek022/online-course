@@ -1,15 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Res,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { RegisterDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
+import type { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { multerOptions } from 'src/multer.config';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() payload: RegisterDto) {
-    return this.usersService.register(payload);
+  @Post('register')
+  @UseInterceptors(FileInterceptor('image', multerOptions))
+  register(
+    @Body() payload: RegisterDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usersService.register(payload, file);
+  }
+
+  @Post('login')
+  login(@Body() payload: LoginUserDto, @Res() res: Response) {
+    return this.usersService.login(payload, res);
   }
 
   @Get()
@@ -23,8 +47,13 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @UseInterceptors(FileInterceptor('image', multerOptions))
+  async updateUser(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() payload: UpdateUserDto,
+  ) {
+    return this.usersService.update(+id, payload, file);
   }
 
   @Delete(':id')

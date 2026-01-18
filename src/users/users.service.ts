@@ -20,7 +20,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
-  async register(payload: RegisterDto) {
+  async register(payload: RegisterDto, file?: Express.Multer.File) {
     try {
       const existingUser = await this.prisma.user.findFirst({
         where: {
@@ -38,8 +38,8 @@ export class UsersService {
           fullName: payload.fullName,
           phone: payload.phone,
           password: hashedPassword,
-          image: payload.image,
           role: payload.role,
+          ...(file && { image: `/uploads/${file.filename}` }),
         },
       });
       const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm';
@@ -178,38 +178,51 @@ export class UsersService {
     }
   }
 
-  async update(id: number, payload: UpdateUserDto) {
-    try {
-      const existingUser = await this.prisma.user.findFirst({
-        where: {
-          id,
-        },
-      });
+  async update(
+  id: number,
+  payload: UpdateUserDto,
+  file?: Express.Multer.File,
+) {
+  try {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+    });
 
-      if (existingUser) {
-        return {
-          success: false,
-          message: 'User topilmadi',
-        };
-      }
-
-      const updatedUser = await this.prisma.user.update({
-        where: { id },
-        data: payload,
-      });
+    if (!existingUser) {
       return {
-        success: true,
-        message: 'User malumotlari yangilandi',
-        data: updatedUser,
+        success: false,
+        message: 'User topilmadi',
       };
-    } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException({
-        message: 'User malumotlarni  update qilishda xatolik yuz berdi ',
-        error,
-      });
     }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        ...payload,
+        ...(file && { image: `/uploads/${file.filename}` }),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'User malumotlari yangilandi',
+      data: {
+        id: updatedUser.id,
+        fullName: updatedUser.fullName,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+        image: updatedUser.image,
+      },
+    };
+  } catch (error) {
+    console.log(error);
+    throw new InternalServerErrorException({
+      message: 'User malumotlarini update qilishda xatolik yuz berdi',
+      error,
+    });
   }
+}
+
 
   async remove(id: number) {
     try {
