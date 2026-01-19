@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
-import { MentorProfileModule } from './mentor-profile/mentor-profile.module';
+import { MentorProfileModule } from './modules/mentor-profile/mentor-profile.module';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -24,6 +25,10 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
         },
       }),
       inject: [ConfigService], 
+    }),
+    CacheModule.register({
+      isGlobal: true, 
+      store: 'redis', 
     }),
     MentorProfileModule,
   ],

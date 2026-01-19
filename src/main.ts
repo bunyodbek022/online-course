@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { AllExceptionsFilter } from './all-exceptions.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(
@@ -24,7 +25,6 @@ async function bootstrap() {
       "Onlayn kurslarni sotib olishingiz uchun ishlab chiqilgan.",
     )
     .setVersion('1.0')
-    .addTag('api')
     .addApiKey(
       {
         type: 'apiKey',
@@ -48,6 +48,9 @@ async function bootstrap() {
     prefix: '/uploads/', 
   });
 
+  // Server hatosi 500 qaytishi uchun
+  app.useGlobalFilters(new AllExceptionsFilter());
+  
   await app.listen(process.env.PORT ?? 3000);
 }
 

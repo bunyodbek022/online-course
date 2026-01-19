@@ -27,8 +27,8 @@ export class RegisterDto {
   password: string;
 
   @ApiProperty({
-    example: 'Bunyodbek G‘ulomjonov',
-    description: 'Foydalanuvchining to‘liq ismi',
+    example: "Bunyodbek G'ulomjonov",
+    description: 'Foydalanuvchining toliq ismi',
   })
   @IsString()
   @IsNotEmpty()

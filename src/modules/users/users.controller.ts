@@ -10,6 +10,8 @@ import {
   UseInterceptors,
   UploadedFile,
   UseGuards,
+  Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { RegisterDto } from './dto/create-user.dto';
@@ -19,11 +21,11 @@ import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from 'src/multer.config';
 import { ApiBody, ApiConsumes, ApiCookieAuth, ApiTags } from '@nestjs/swagger';
-import { access } from 'fs';
 import { Roles } from 'src/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
+import { VerifyUserDto } from './dto/verify-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -43,10 +45,26 @@ export class UsersController {
     return this.usersService.register(payload, file);
   }
 
+
+  @ApiBody({
+    type: VerifyUserDto
+  })
+  @Post('verify-otp')
+  async verifyOtp(@Body() verify: VerifyUserDto) {
+    return this.usersService.verifyOtp(verify.phone, verify.code);
+  }
+
   @ApiBody({ type: LoginUserDto })
   @Post('login')
   login(@Body() payload: LoginUserDto, @Res() res: Response) {
     return this.usersService.login(payload, res);
+  }
+  
+  @Post('logout')
+  @ApiCookieAuth('access_token')
+  @UseGuards(AuthGuard, RolesGuard)
+  logout(@Req() req) {
+    return this.usersService.logout(req);
   }
 
   @Get()
@@ -67,26 +85,29 @@ export class UsersController {
   @ApiCookieAuth('access_token')
   @UseGuards(AuthGuard, RolesGuard)
   @UseInterceptors(FileInterceptor('image', multerOptions))
-  async updateUser(
+    
+  updateUser(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() payload: UpdateUserDto,
+    @Req() req,
   ) {
+    const user = req.user;
+    const isAdmin = user.role === UserRole.ADMIN || user.role === UserRole.ASSISTANT;
+    if (!isAdmin && id !== String(user.id)) {
+      throw new ForbiddenException(
+        "Sizda boshqa foydalanuvchi ma'lumotlarini o'zgartirish huquqi yo'q",
+      );
+    }
     return this.usersService.update(+id, payload, file);
   }
 
-  @Delete('logout')
-  @ApiCookieAuth('access_token')
-  @UseGuards(AuthGuard, RolesGuard)
-  logout(@Res() res) {
-    return this.usersService.logout(res);
-  }
 
   @Delete('delete-profile')
   @ApiCookieAuth('access_token')
   @UseGuards(AuthGuard, RolesGuard)
-  SelfDelete(@Res() res) {
-    const user = res.user
+  SelfDelete(@Req() req) {
+    const user = req.user
     return this.usersService.remove(user.id)
   }
   
