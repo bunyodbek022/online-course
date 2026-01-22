@@ -59,4 +59,39 @@ export class SmsService {
       throw error;
     }
   }
+
+  async resetPhoneNumber(phone: string, code: string) {
+    if (!this.token) await this.login();
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(
+          `${this.baseUrl}/message/sms/send`,
+          {
+            mobile_phone: phone.replace(/\+/g, ''),
+            message: `Fixoo platformasidan ro'yxatdan o'tish uchun tasdiqlash kodi: ${code}. Kodni hech kimga bermang!`,
+            from: '4546',
+          },
+          {
+            headers: { Authorization: `Bearer ${this.token}` },
+          },
+        ),
+      );
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        this.logger.warn('Eskiz: Token muddati otgan, yangilanmoqda...');
+
+        await this.login();
+
+        try {
+          return await this.resetPhoneNumber(phone, code);
+        } catch (retryError) {
+          this.logger.error('Eskiz: Ikkinchi urinish ham xato bilan tugadi');
+          throw retryError;
+        }
+      }
+
+      throw error;
+    }
+  }
 }

@@ -3,7 +3,7 @@ import { IsPhoneNumber, IsString } from "class-validator";
 
 export class LoginUserDto {
   @ApiProperty({
-    example: '+998901234567',
+    example: '+998507003613',
     description: 'Foydalanuvchining telefon raqami',
   })
   @IsPhoneNumber()

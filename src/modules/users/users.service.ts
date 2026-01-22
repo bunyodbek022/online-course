@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Inject,
   Injectable,
@@ -18,6 +19,8 @@ import { UserRole } from '@prisma/client';
 import { SmsService } from 'src/services/sms.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { RoleEnumDto } from './dto/role-enum.dto';
 
 @Injectable()
 export class UsersService {
@@ -25,10 +28,12 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly smsService: SmsService,
+    private readonly cloudinaryService: CloudinaryService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   async register(payload: RegisterDto, file?: Express.Multer.File) {
     const cleanPhone = payload.phone.replace(/\D/g, '');
+    console.log('FILE:', file);
     const existingUser = await this.prisma.user.findUnique({
       where: {
         phone: `+${cleanPhone.startsWith('998') ? cleanPhone : '998' + cleanPhone}`,
@@ -39,13 +44,19 @@ export class UsersService {
       return { success: false, message: 'User  already exists' };
     }
 
+    let imageUrl: string | null = null;
+
+    if (file) {
+      imageUrl = await this.cloudinaryService.uploadImage(file);
+    }
+
     const hashedPassword = await bcrypt.hash(payload.password, 10);
 
     const user = {
       fullName: payload.fullName,
       phone: payload.phone,
       password: hashedPassword,
-      ...(file && { image: `/uploads/${file.filename}` }),
+      image: imageUrl,
     };
 
     await this.sendOtp(cleanPhone, user);
@@ -111,6 +122,39 @@ export class UsersService {
       },
     });
   }
+
+  async giveRole(id: number, role: RoleEnumDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        role: true,
+        image: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Bunday user topilmadi');
+    }
+    await this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        role : role.role,
+      },
+    });
+    return {
+      success: true,
+      message: 'Role is added successfully',
+    };
+  }
   async findAll() {
     const users = await this.prisma.user.findMany({
       select: {
@@ -143,10 +187,7 @@ export class UsersService {
     });
 
     if (!user) {
-      return {
-        success: false,
-        message: 'Bunday user topilmadi',
-      };
+      throw new NotFoundException('Bunday user topilmadi');
     }
     return {
       success: true,
@@ -166,11 +207,17 @@ export class UsersService {
       };
     }
 
+    let imageUrl: string | undefined;
+
+    if (file) {
+      imageUrl = await this.cloudinaryService.uploadImage(file, 'users');
+    }
+
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
         ...payload,
-        ...(file && { image: `/uploads/${file.filename}` }),
+         ...(imageUrl && { image: imageUrl }),
       },
     });
 
@@ -199,17 +246,6 @@ export class UsersService {
       };
     }
     return this.prisma.user.delete({ where: { id } });
-  }
-
-  async logout(res: Response) {
-    const isProduction = process.env.NODE_ENV === 'production';
-    res.clearCookie('accessToken', {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      path: '/',
-    });
-    res.send({ succcess: true, message: 'Muvaffaqiyatli tizimdan chiqildi' });
   }
 
   async sendOtp(phone: string, userData: any) {
@@ -302,7 +338,10 @@ export class UsersService {
     } else {
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { isActive: true },
+        data: {
+          isActive: true,
+          phone: phone,
+        },
       });
     }
 

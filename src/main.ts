@@ -11,9 +11,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,            
-      forbidNonWhitelisted: true, 
-      transform: true,           
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: false,
     }),
   );
   app.use(cookieParser());
@@ -21,9 +21,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Online-Course')
-    .setDescription(
-      "Onlayn kurslarni sotib olishingiz uchun ishlab chiqilgan.",
-    )
+    .setDescription('Onlayn kurslarni sotib olishingiz uchun ishlab chiqilgan.')
     .setVersion('1.0')
     .addApiKey(
       {
@@ -32,9 +30,10 @@ async function bootstrap() {
         in: 'cookie',
       },
       'cookie-auth-key',
-  )
+    )
     .addCookieAuth('access_token')
     .build();
+  app.setGlobalPrefix('api');
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory, {
     swaggerOptions: {
@@ -45,12 +44,12 @@ async function bootstrap() {
   const uploadsPath = join(process.cwd(), 'uploads');
 
   app.useStaticAssets(uploadsPath, {
-    prefix: '/uploads/', 
+    prefix: '/uploads/',
   });
 
   // Server hatosi 500 qaytishi uchun
   app.useGlobalFilters(new AllExceptionsFilter());
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 

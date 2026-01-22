@@ -90,7 +90,7 @@ model CourseCategory {
 }
 
 model Course {
-  id         String      @id @default(uuid())
+  id         Int      @id @default(autoincrement())
   name       String
   about      String
   price      Decimal
@@ -116,7 +116,7 @@ model Course {
 // For Teachers
 model AssignedCourse {
   userId    Int
-  courseId  String
+  courseId  Int
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -128,7 +128,7 @@ model AssignedCourse {
 
 model PurchasedCourse {
   userId      Int
-  courseId    String
+  courseId    Int
   amount      Decimal?
   paidVia     PaidVia
   purchasedAt DateTime @default(now())
@@ -145,7 +145,7 @@ model Rating {
   comment   String
   createdAt DateTime @default(now())
   userId   Int
-  courseId String
+  courseId Int
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -156,7 +156,7 @@ model LastActivity {
   url       String?
   updatedAt DateTime @default(now())
   userId   Int     @unique
-  courseId String?
+  courseId Int?
   groupId  Int?
   lessonId String?
 
@@ -170,7 +170,7 @@ model LessonGroup {
   id        Int      @id @default(autoincrement())
   name      String
   createdAt DateTime @default(now())
-  courseId String
+  courseId Int
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons        Lesson[]
@@ -278,7 +278,7 @@ model Question {
   createdAt DateTime  @default(now())
   updatedAt DateTime?
   userId   Int
-  courseId String
+  courseId Int
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
