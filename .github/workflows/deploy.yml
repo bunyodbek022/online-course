@@ -22,27 +22,22 @@ jobs:
           # Xatolik bo'lsa darhol to'xtash uchun:
           script_stop: true
           script: |
-            echo "--- Navigating to project folder ---"
-            # -p bayrog'i papka bo'lsa xato bermaydi
-            mkdir -p /root/online-course
-            cd /root/online-course
-
-            if [ ! -d ".git" ]; then
-              echo "Cloning repository..."
-              git clone https://github.com/bunyodbek022/online-course . 
-            else
-              echo "Pulling latest changes..."
-              git fetch origin main
-              git reset --hard origin/main
-            fi
-
-            echo "--- Docker Operations ---"
-            # Ba'zan SSH orqali kirganda 'docker' topilmasligi mumkin, 
-            # shuning uchun to'liq yo'lni yoki 'bash -l' ni ta'minlash kerak.
+            # To'liq yo'lni qo'lda yozamiz (yulduzchalarsiz)
+            cd /root
             
-            # Konteynerlarni tozalash va qayta qurish
-            docker compose down --remove-orphans
-            docker compose build --no-cache
-            docker compose up -d
+            if [ ! -d "online-course" ]; then
+              echo "Cloning repository..."
+              git clone https://github.com/bunyodbek022/online-course
+            fi
+            
+            cd online-course
+            
+            echo "Updating code..."
+            git fetch origin main
+            git reset --hard origin/main
 
-            echo "--- Deployment Finished Successfully ---"
+            echo "Docker operations..."
+            # Docker buyruqlarini bitta-bitta tekshirib bajaramiz
+            docker compose down --remove-orphans || true
+            docker compose build
+            docker compose up -d
