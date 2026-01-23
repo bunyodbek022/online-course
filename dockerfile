@@ -3,24 +3,25 @@ WORKDIR /app
 
 RUN corepack enable
 
-# Faqat dependency fayllarini nusxalash (cache uchun)
-COPY package*.json pnpm-lock.yaml* ./
+# 1. Kutubxonalar
+COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install
 
-# Hamma kodni nusxalash
+# 2. Kod
 COPY . .
 
-# Prisma client yaratish
+# 3. Prisma
 RUN npx prisma generate
 
-# Loyihani build qilish
+# 4. Build
 RUN pnpm run build
 
 # --- DIAGNOSTIKA ---
-# Builddan keyin nima hosil bo'lganini ko'rish (logda ko'rinadi)
-RUN ls -R dist
+# Mana shu qator build paytida bizga fayllar qayerda ekanini ko'rsatadi
+RUN find dist -name "main.js"
+# -------------------
 
 EXPOSE 3000
 
-# Eng muhim joyi: agar dist/main.js bo'lmasa, dist/src/main.js ni qidiradi
-CMD sh -c "npx prisma migrate deploy && (node dist/main.js || node dist/src/main.js)"
+# Hammasini qamrab oluvchi start buyrug'i
+CMD sh -c "npx prisma migrate deploy && (node dist/main.js || node dist/src/main.js || node dist/index.js)"
