@@ -1,0 +1,45 @@
+name: Deploy Online Course
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Kodni olish
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. SSH orqali serverga ulanish va Docker Compose ishga tushirish
+      - name: Deploy over SSH and run Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}       # server IP yoki domain
+          username: ${{ secrets.SSH_USER }}   # masalan, root
+          key: ${{ secrets.SSH_KEY }}         # SSH private key (GitHub Secrets)
+          script: |
+            echo "Navigating to project folder..."
+            mkdir -p /root/online-course
+            cd /root/online-course
+
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository!"
+              git clone https://github.com/TUGRI_USER/online-course . 
+            else
+              echo "Pulling latest changes!"
+              git reset --hard
+              git pull origin main
+            fi
+
+            echo "Stopping containers if any..."
+            docker compose down
+
+            echo "Building containers..."
+            docker compose build
+
+            echo "Running containers in detached mode..."
+            docker compose up -d
