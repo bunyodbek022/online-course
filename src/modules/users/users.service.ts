@@ -49,6 +49,7 @@ export class UsersService {
     if (file) {
       imageUrl = await this.cloudinaryService.uploadImage(file);
     }
+    console.log(imageUrl)
 
     const hashedPassword = await bcrypt.hash(payload.password, 10);
 
@@ -56,7 +57,7 @@ export class UsersService {
       fullName: payload.fullName,
       phone: payload.phone,
       password: hashedPassword,
-      image: imageUrl,
+      image: `${imageUrl}`,
     };
 
     await this.sendOtp(cleanPhone, user);

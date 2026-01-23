@@ -8,11 +8,10 @@ export class PurchaseCourseDto {
   courseId: number;
 
   @ApiProperty({ example: 100 })
-  @IsOptional()
   @IsNumber()
-  amount?: number;
+  amount: number;
 
-  @ApiProperty({ enum: PaidVia, example: 'CARD' })
+  @ApiProperty({ enum: PaidVia, example: 'PAYME' })
   @IsEnum(PaidVia)
   paidVia: PaidVia;
 }

@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -59,8 +60,8 @@ create(
   @Get('single/:lessonId')
   @Roles(UserRole.STUDENT)
   @UseGuards(AuthGuard, RolesGuard)
-  getSingle(@Param('lessonId') lessonId: string) {
-    return this.service.getSingle(lessonId);
+  getSingle(@Param('lessonId') lessonId: string, @Req() req) {
+    return this.service.getSingle(lessonId, req.user.id);
   }
 
   @Patch(':id')

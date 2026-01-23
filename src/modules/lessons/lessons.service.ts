@@ -1,5 +1,6 @@
 // lesson.service.ts
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -47,10 +48,13 @@ export class LessonService {
       throw new NotFoundException('Lesson not found');
     }
 
-    return lesson;
+    return {
+      sucess: true,
+      data: lesson
+    }
   }
 
-  async getSingle(lessonId: string) {
+  async getSingle(lessonId: string, userId: number) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },
       select: {
@@ -60,14 +64,28 @@ export class LessonService {
         video: true,
         files: true,
         createdAt: true,
+        group: {
+          select: {
+            courseId : true
+          }
+        }
       },
     });
 
     if (!lesson) {
       throw new NotFoundException('Lesson not found');
     }
+    const hasAccess = await this.prisma.purchasedCourse.findFirst({ where: { userId, courseId: lesson.group.courseId } });
 
-    return lesson;
+    if (!hasAccess) {
+      throw new ForbiddenException("Siz bu kursni sotib olmagansiz");
+    }
+
+
+    return {
+      sucess: true,
+      data: lesson
+    }
   }
 
   async update(id: string, dto: UpdateLessonDto) {

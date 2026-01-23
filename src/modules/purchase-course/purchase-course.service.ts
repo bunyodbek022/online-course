@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PurchaseCourseDto } from './dto/purchase-course.dto';
 
@@ -22,6 +22,9 @@ export class PurchasedCourseService {
     });
     if (exists) return exists;
 
+    if (dto?.amount !== Number(course.price)) {
+      throw new BadRequestException(`Siz kurs uchun ${course.price} som to'lov qilishingiz kerak`)
+    }
     const purchased = await this.prisma.purchasedCourse.create({
       data: {
         userId,

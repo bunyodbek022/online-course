@@ -56,6 +56,7 @@ export class UsersController {
     return this.usersService.register(payload, file);
   }
 
+  
   @ApiBody({
     type: VerifyUserDto,
   })
