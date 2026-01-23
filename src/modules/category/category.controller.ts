@@ -18,14 +18,14 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
 
 @ApiTags('Category')
-@ApiCookieAuth('access_token')
-@Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
-@UseGuards(AuthGuard, RolesGuard)
 @Controller('course-category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
+  @ApiCookieAuth('access_token')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
+  @UseGuards(AuthGuard, RolesGuard)
   create(@Body() dto: CreateCategoryDto) {
     return this.categoryService.create(dto);
   }
@@ -41,14 +41,17 @@ export class CategoryController {
   }
 
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateCategoryDto,
-  ) {
+  @ApiCookieAuth('access_token')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
+  @UseGuards(AuthGuard, RolesGuard)
+  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.categoryService.update(+id, dto);
   }
 
   @Delete(':id')
+  @ApiCookieAuth('access_token')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
+  @UseGuards(AuthGuard, RolesGuard)
   remove(@Param('id') id: string) {
     return this.categoryService.remove(+id);
   }

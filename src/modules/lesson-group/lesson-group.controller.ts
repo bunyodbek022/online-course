@@ -21,13 +21,13 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
 
 @ApiTags('Lesson Groups')
-@ApiCookieAuth('access_token')
-@Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
-@UseGuards(AuthGuard, RolesGuard)
 @Controller('lesson-groups')
 export class LessonGroupController {
   constructor(private readonly service: LessonGroupService) {}
 
+  @ApiCookieAuth('access_token')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
+  @UseGuards(AuthGuard, RolesGuard)
   @Post('create')
   create(@Body() dto: CreateLessonGroupDto) {
     return this.service.create(dto);
@@ -36,14 +36,8 @@ export class LessonGroupController {
   @Get()
   @ApiQuery({ name: 'limit', required: false, example: 10 })
   @ApiQuery({ name: 'offset', required: false, example: 0 })
-  findAll(
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
-  ) {
-    return this.service.findAll(
-      Number(limit) || 10,
-      Number(offset) || 0,
-    );
+  findAll(@Query('limit') limit?: number, @Query('offset') offset?: number) {
+    return this.service.findAll(Number(limit) || 10, Number(offset) || 0);
   }
 
   @Get('all/:courseId')
@@ -66,6 +60,9 @@ export class LessonGroupController {
     return this.service.findOne(id);
   }
 
+  @ApiCookieAuth('access_token')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
+  @UseGuards(AuthGuard, RolesGuard)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -74,6 +71,9 @@ export class LessonGroupController {
     return this.service.update(id, dto);
   }
 
+  @ApiCookieAuth('access_token')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT, UserRole.MENTOR)
+  @UseGuards(AuthGuard, RolesGuard)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
