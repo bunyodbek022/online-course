@@ -1,23 +1,26 @@
 FROM node:22-alpine
 WORKDIR /app
 
-# pnpm’ni yoqish
 RUN corepack enable
 
-COPY package*.json ./
-
-# Kutubxonalarni o'rnatish
+# Faqat dependency fayllarini nusxalash (cache uchun)
+COPY package*.json pnpm-lock.yaml* ./
 RUN pnpm install
 
+# Hamma kodni nusxalash
 COPY . .
 
-# Prisma client'ni generatsiya qilish (Baza ulanishi shart emas)
+# Prisma client yaratish
 RUN npx prisma generate
 
 # Loyihani build qilish
 RUN pnpm run build
 
+# --- DIAGNOSTIKA ---
+# Builddan keyin nima hosil bo'lganini ko'rish (logda ko'rinadi)
+RUN ls -R dist
+
 EXPOSE 3000
 
-# Migratsiyani ishga tushirish va keyin loyihani boshlash
-CMD sh -c "npx prisma migrate deploy && pnpm run start:prod"
+# Eng muhim joyi: agar dist/main.js bo'lmasa, dist/src/main.js ni qidiradi
+CMD sh -c "npx prisma migrate deploy && (node dist/main.js || node dist/src/main.js)"
