@@ -10,36 +10,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Kodni olish
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. SSH orqali serverga ulanish va Docker Compose ishga tushirish
       - name: Deploy over SSH and run Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}       # server IP yoki domain
-          username: ${{ secrets.SSH_USER }}   # masalan, root
-          key: ${{ secrets.SSH_KEY }}         # SSH private key (GitHub Secrets)
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          # Xatolik bo'lsa darhol to'xtash uchun:
+          script_stop: true
           script: |
-            echo "Navigating to project folder..."
+            echo "--- Navigating to project folder ---"
+            # -p bayrog'i papka bo'lsa xato bermaydi
             mkdir -p /root/online-course
             cd /root/online-course
 
             if [ ! -d ".git" ]; then
-              echo "Cloning repository!"
+              echo "Cloning repository..."
               git clone https://github.com/bunyodbek022/online-course . 
             else
-              echo "Pulling latest changes!"
-              git reset --hard
-              git pull origin main
+              echo "Pulling latest changes..."
+              git fetch origin main
+              git reset --hard origin/main
             fi
 
-            echo "Stopping containers if any..."
-            docker compose down
-
-            echo "Building containers..."
-            docker compose build
-
-            echo "Running containers in detached mode..."
+            echo "--- Docker Operations ---"
+            # Ba'zan SSH orqali kirganda 'docker' topilmasligi mumkin, 
+            # shuning uchun to'liq yo'lni yoki 'bash -l' ni ta'minlash kerak.
+            
+            # Konteynerlarni tozalash va qayta qurish
+            docker compose down --remove-orphans
+            docker compose build --no-cache
             docker compose up -d
+
+            echo "--- Deployment Finished Successfully ---"
