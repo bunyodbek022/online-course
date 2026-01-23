@@ -6,17 +6,18 @@ RUN corepack enable
 
 COPY package*.json ./
 
+# Kutubxonalarni o'rnatish
 RUN pnpm install
 
 COPY . .
 
-# Prisma generate va migrations (agar kerak bo‘lsa)
+# Prisma client'ni generatsiya qilish (Baza ulanishi shart emas)
 RUN npx prisma generate
-RUN npx prisma migrate deploy 
 
+# Loyihani build qilish
 RUN pnpm run build
 
 EXPOSE 3000
 
-# Production mode’da ishga tushirish
-CMD ["pnpm", "run", "start:prod"]
+# Migratsiyani ishga tushirish va keyin loyihani boshlash
+CMD sh -c "npx prisma migrate deploy && pnpm run start:prod"
